@@ -5,6 +5,7 @@ import os
 import time
 import psutil
 import multiprocessing
+import subprocess
 
 def proceso_1(cola):
     print("     Proceso 1 iniciado, PID:", os.getpid())
@@ -13,6 +14,10 @@ def proceso_1(cola):
     pid_proceso_2 = cola.get()
     print("Proceso 2 recibido desde proceso 1, PID:", pid_proceso_2)
 
+    #añadir a la cola el PID del proceso 1 para que salga en el orden que quiero que es primero el pid proceso 2 y luego el proceso 1
+    pid_proceso_1 = os.getpid()
+    cola.put(pid_proceso_1)
+    
     # Esperar 10 segundos
     time.sleep(10)
     
@@ -32,9 +37,24 @@ def proceso_2(cola):
     cola.put(pid_proceso_2)
 
     print("     Proceso 2 iniciado, PID:", pid_proceso_2 )
+    
+    # Cambiar la prioridad del proceso 1
     time.sleep(5)
+    pid_proceso_1 = cola.get()
+    try:
+        proceso_1 = psutil.Process(pid_proceso_1)
+        proceso_1.nice(psutil.REALTIME_PRIORITY_CLASS)
+        print("Prioridad del proceso 1 cambiada por proceso 2")
+    except psutil.NoSuchProcess:
+        print("No se pudo cambiar la prioridad, proceso 1 no encontrado")
 
-    print("Proceso 2 cambio prioridad proceso 1")
+    # Ejecutar el comando ping a la web de Google
+    try:
+        subprocess.run(["ping", "google.com"], check=True)
+        print("Comando ping completado en proceso 2")
+    except subprocess.CalledProcessError:
+        print("Error al ejecutar el comando ping en el proceso 2")
+
     #tiempo para que el procesa siga existiendo y lo pueda eliminar en proceso 1
     time.sleep(10)
     print("Este mensaje no deberias verlo")
@@ -46,7 +66,6 @@ def list_processes():
 
     for proceso in psutil.process_iter():
         try:
-            #con attrs especificamos que atributos del proceso escogemos
             procesoInfo = proceso.as_dict(attrs=['pid', 'name'])
             
         except psutil.NoSuchProcess:
@@ -58,10 +77,10 @@ if __name__ == "__main__":
     #QUEUE
     cola_info = multiprocessing.Queue()
 
-    proceso_1_process = multiprocessing.Process(target=proceso_1, args=(cola_info,))
+    proceso_1_process = multiprocessing.Process(name="PROCESO 1", target=proceso_1, args=(cola_info,))
     proceso_1_process.start()
     
-    proceso_2_process = multiprocessing.Process(target=proceso_2, args=(cola_info,))
+    proceso_2_process = multiprocessing.Process(name="PROCESO 2", target=proceso_2, args=(cola_info,))
     proceso_2_process.start()
     
     list_processes()
