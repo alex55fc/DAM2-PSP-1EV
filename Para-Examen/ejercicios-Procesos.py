@@ -21,6 +21,7 @@ def proceso_1(cola):
         proceso_2 = psutil.Process(pid_proceso_2)
         proceso_2.terminate()
         print("Proceso 2 eliminado por proceso 1")
+        print("Estado del proceso 2: ", proceso_2.status)
     except psutil.NoSuchProcess:
         print("Proceso 2 ya terminado antes de intentar eliminarlo")
 
