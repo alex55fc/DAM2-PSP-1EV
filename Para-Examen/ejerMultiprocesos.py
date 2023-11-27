@@ -77,10 +77,10 @@ if __name__ == "__main__":
     #QUEUE
     cola_info = multiprocessing.Queue()
 
-    proceso_1_process = multiprocessing.Process(name="PROCESO 1", target=proceso_1, args=(cola_info,))
+    proceso_1_process = multiprocessing.Process(target=proceso_1, args=(cola_info,))
     proceso_1_process.start()
     
-    proceso_2_process = multiprocessing.Process(name="PROCESO 2", target=proceso_2, args=(cola_info,))
+    proceso_2_process = multiprocessing.Process(target=proceso_2, args=(cola_info,))
     proceso_2_process.start()
     
     list_processes()
